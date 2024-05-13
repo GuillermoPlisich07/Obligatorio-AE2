@@ -4,19 +4,61 @@ import interfaz.*;
 
 public class ImplementacionSistema implements Sistema {
 
+    private ABB<Pasajero> ABBPasajeros;
+
     @Override
     public Retorno inicializarSistema(int maxAeropuertos, int maxAerolineas) {
-        return Retorno.noImplementada();
+
+        if(maxAeropuertos<=5){
+            return Retorno.error1("Deben ser mas de 5 Aeropuertos");
+        }
+        if(maxAerolineas<=3){
+            return Retorno.error2("Deben ser mas de 3 Aerolineas");
+        }
+
+        this.ABBPasajeros = new ABB<Pasajero>();
+
+
+
+        return Retorno.ok();
     }
 
     @Override
     public Retorno registrarPasajero(String cedula, String nombre, String telefono, Categoria categoria) {
-        return Retorno.noImplementada();
+
+        if(cedula == null || nombre == null || telefono == null ||
+                cedula.isEmpty()|| nombre.isEmpty() || telefono.isEmpty() || categoria == null){
+            return Retorno.error1("Algunos de los parametros es vacio o null");
+        }
+        if(!Pasajero.validarCedula(cedula)){
+            return Retorno.error2("La cedula no tiene formato valido");
+        }
+        Pasajero aux = new Pasajero(cedula);
+        if(this.ABBPasajeros.buscar(aux)!=null){
+            return Retorno.error3("El pasajero que intenta ingresar ya fue registrado");
+        }
+        Pasajero nuevo = new Pasajero(cedula,nombre,telefono,categoria);
+        ABBPasajeros.insertar(nuevo);
+        return Retorno.ok();
     }
 
     @Override
     public Retorno buscarPasajero(String cedula) {
-        return Retorno.noImplementada();
+        if(cedula == null || cedula.isEmpty()){
+            return  Retorno.error1("La cedula es vacia!");
+        }
+        if(!Pasajero.validarCedula(cedula)){
+            return Retorno.error2("La cedula no tiene formato valido");
+        }
+        Pasajero aux = new Pasajero(cedula);
+        Pasajero res =this.ABBPasajeros.buscar(aux);
+        System.out.println("res = " + res);
+        if(res!=null){
+            return Retorno.ok(this.ABBPasajeros.getContadorBusqueda(),res.toString());
+        }else{
+            return Retorno.error3("El Pasajero con esta cedula no existe!");
+        }
+
     }
 
     @Override
