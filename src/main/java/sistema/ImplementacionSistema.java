@@ -5,6 +5,9 @@ import interfaz.*;
 public class ImplementacionSistema implements Sistema {
 
     private ABB<Pasajero> ABBPasajeros;
+    private ABB<Aerolinea> ABBAerolinea;
+    private int maxAeropuertos;
+    private int maxAerolineas;
 
     @Override
     public Retorno inicializarSistema(int maxAeropuertos, int maxAerolineas) {
@@ -16,9 +19,11 @@ public class ImplementacionSistema implements Sistema {
             return Retorno.error2("Deben ser mas de 3 Aerolineas");
         }
 
+        this.maxAeropuertos=maxAeropuertos;
+        this.maxAerolineas=maxAerolineas;
+
         this.ABBPasajeros = new ABB<Pasajero>();
-
-
+        this.ABBAerolinea = new ABB<Aerolinea>();
 
         return Retorno.ok();
     }
@@ -73,12 +78,26 @@ public class ImplementacionSistema implements Sistema {
 
     @Override
     public Retorno registrarAerolinea(String codigo, String nombre) {
-        return Retorno.noImplementada();
+        if(this.maxAerolineas<=0){
+            return Retorno.error1("Ya no se pueden ingresar mas Aerolineas");
+        }
+        if(codigo == null || nombre == null || codigo.isEmpty() || nombre.isEmpty()) {
+            return Retorno.error2("Algunos de los parametros es vacio o null");
+        }
+        Aerolinea aux = new Aerolinea(codigo);
+        if(this.ABBAerolinea.buscar(aux)!=null){
+            return Retorno.error3("La Aerolinea que intenta ingresar ya fue registrado");
+        }
+
+        Aerolinea nuevo = new Aerolinea(codigo,nombre);
+        ABBAerolinea.insertar(nuevo);
+        this.maxAerolineas--;
+        return Retorno.ok();
     }
 
     @Override
     public Retorno listarAerolineasDescendente() {
-        return Retorno.noImplementada();
+        return Retorno.ok(ABBAerolinea.listarDescendente());
     }
 
     @Override

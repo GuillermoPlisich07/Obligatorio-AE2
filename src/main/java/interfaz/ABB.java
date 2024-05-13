@@ -1,5 +1,7 @@
 package interfaz;
 
+import java.util.List;
+
 public class ABB<T extends Comparable<T>>{
     public Nodo<T> raiz;
     int contadorBusqueda;
@@ -55,5 +57,29 @@ public class ABB<T extends Comparable<T>>{
         }else{
             return null;
         }
+    }
+
+    public String listarDescendente(){
+        return listarDescendente(this.raiz);
+    }
+
+    public String listarDescendente(Nodo<T> nodo){
+        if(nodo != null){
+            String izq;
+            String der;
+            if(nodo.getIzq()==null){
+                izq = listarDescendente(nodo.getIzq());
+            }else{
+                izq = listarDescendente(nodo.getIzq())+'|';
+            }
+            if(nodo.getDer()==null){
+                der = listarDescendente(nodo.getDer());
+            }else{
+                der = listarDescendente(nodo.getDer())+'|';
+            }
+            return izq+nodo.getDato().toString()+der;
+        }
+        return "";
+
     }
 }
