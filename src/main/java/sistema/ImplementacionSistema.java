@@ -5,7 +5,9 @@ import interfaz.*;
 public class ImplementacionSistema implements Sistema {
 
     private ABB<Pasajero> ABBPasajeros;
+    private ABB<Pasajero>[] ABBPasajerosPorCategoria;
     private ABB<Aerolinea> ABBAerolinea;
+    private Grafo<Aeropuerto> GrafoAeropuerto;
     private int maxAeropuertos;
     private int maxAerolineas;
 
@@ -23,7 +25,15 @@ public class ImplementacionSistema implements Sistema {
         this.maxAerolineas=maxAerolineas;
 
         this.ABBPasajeros = new ABB<Pasajero>();
+
+        this.ABBPasajerosPorCategoria = (ABB<Pasajero>[]) new ABB[3];
+        this.ABBPasajerosPorCategoria[0] = new ABB<Pasajero>();
+        this.ABBPasajerosPorCategoria[1] = new ABB<Pasajero>();
+        this.ABBPasajerosPorCategoria[2] = new ABB<Pasajero>();
+
         this.ABBAerolinea = new ABB<Aerolinea>();
+        this.GrafoAeropuerto = new Grafo<Aeropuerto>(maxAeropuertos);
+
 
         return Retorno.ok();
     }
@@ -43,7 +53,8 @@ public class ImplementacionSistema implements Sistema {
             return Retorno.error3("El pasajero que intenta ingresar ya fue registrado");
         }
         Pasajero nuevo = new Pasajero(cedula,nombre,telefono,categoria);
-        ABBPasajeros.insertar(nuevo);
+        this.ABBPasajeros.insertar(nuevo);
+        this.ABBPasajerosPorCategoria[categoria.getIndice()].insertar(nuevo);
         return Retorno.ok();
     }
 
@@ -63,17 +74,17 @@ public class ImplementacionSistema implements Sistema {
         }else{
             return Retorno.error3("El Pasajero con esta cedula no existe!");
         }
-
     }
 
     @Override
     public Retorno listarPasajerosAscendente() {
-        return Retorno.noImplementada();
+
+        return Retorno.ok(ABBPasajeros.listarAscendente());
     }
 
     @Override
     public Retorno listarPasajerosPorCategoria(Categoria categoria) {
-        return Retorno.noImplementada();
+        return Retorno.ok(this.ABBPasajerosPorCategoria[categoria.getIndice()].listarAscendente());
     }
 
     @Override
@@ -97,22 +108,99 @@ public class ImplementacionSistema implements Sistema {
 
     @Override
     public Retorno listarAerolineasDescendente() {
+
         return Retorno.ok(ABBAerolinea.listarDescendente());
     }
 
     @Override
     public Retorno registrarAeropuerto(String codigo, String nombre) {
-        return Retorno.noImplementada();
+
+        // Verificar si se puede agregar más aeropuertos
+        if (this.GrafoAeropuerto.getCantidadVertices() < this.maxAeropuertos) {
+            // Validación de parámetros
+            if (codigo != null && nombre != null && !codigo.isEmpty() && !nombre.isEmpty()) {
+                // Verificar si el aeropuerto ya existe
+                Aeropuerto nuevoAeropuerto = new Aeropuerto(codigo, nombre);
+                int indiceExistente = this.GrafoAeropuerto.buscarAeropuerto(nuevoAeropuerto);
+
+                if (indiceExistente == -1) {
+                    // Agregar el aeropuerto al grafo
+                    this.GrafoAeropuerto.agregarVertice(nuevoAeropuerto);
+                    return Retorno.ok();
+                }
+                return Retorno.error3("El aeropuerto ya existe");
+            }
+            return Retorno.error2("El código y el nombre no pueden ser nulos o vacíos");
+        }
+        return Retorno.error1("Ya se llegó al tope máximo de Aeropuertos");
+
     }
 
     @Override
     public Retorno registrarConexion(String codigoAeropuertoOrigen, String codigoAeropuertoDestino, double kilometros) {
-        return Retorno.noImplementada();
+        if (kilometros > 0) {
+            if (codigoAeropuertoOrigen != null && codigoAeropuertoDestino != null && !codigoAeropuertoOrigen.isEmpty() && !codigoAeropuertoDestino.isEmpty()) {
+                int indiceOrigen = GrafoAeropuerto.buscarAeropuerto(new Aeropuerto(codigoAeropuertoOrigen));
+                int indiceDestino = GrafoAeropuerto.buscarAeropuerto(new Aeropuerto(codigoAeropuertoDestino));
+
+                if (indiceOrigen == -1 ) {
+                    return Retorno.error3("El aeropuerto de origen no existe");
+                } else if (indiceDestino == -1) {
+                    return Retorno.error4("El aeropuerto de destino no existe");
+                }
+
+                // Verificar si ya existe una conexión entre los aeropuertos
+                if (GrafoAeropuerto.getConexiones()[indiceOrigen][indiceDestino] != null) {
+                    return Retorno.error5("Ya existe una conexión entre los aeropuertos");
+                }
+
+                // Registrar la conexión
+                this.GrafoAeropuerto.agregarConexion(indiceOrigen, indiceDestino, kilometros);
+                return Retorno.ok();
+            }
+            return Retorno.error2("Los códigos de los aeropuertos no pueden ser nulos o vacíos");
+        }
+        return Retorno.error1("Los kilómetros deben ser mayores que 0");
     }
 
     @Override
-    public Retorno registrarVuelo(String codigoCiudadOrigen, String codigoAeropuertoDestino, String codigoDeVuelo, double combustible, double minutos, double costoEnDolares, String codigoAerolinea) {
-        return Retorno.noImplementada();
+    public Retorno registrarVuelo(String codigoCiudadOrigen, String codigoAeropuertoDestino, String codigoDeVuelo, double combustible, double minutos,
+                                  double costoEnDolares, String codigoAerolinea) {
+
+        if (codigoCiudadOrigen != null && codigoAeropuertoDestino != null && codigoDeVuelo != null && codigoAerolinea != null
+                && !codigoCiudadOrigen.isEmpty() && !codigoAeropuertoDestino.isEmpty() && !codigoDeVuelo.isEmpty() && !codigoAerolinea.isEmpty()) {
+            if (combustible > 0 && minutos > 0 && costoEnDolares > 0) {
+                int indiceOrigen = this.GrafoAeropuerto.buscarAeropuerto(new Aeropuerto(codigoCiudadOrigen));
+                int indiceDestino = this.GrafoAeropuerto.buscarAeropuerto(new Aeropuerto(codigoAeropuertoDestino));
+
+                if (indiceOrigen == -1) {
+                    return Retorno.error3("Uno o ambos aeropuertos no existen");
+                } else if (indiceDestino == -1) {
+                    return Retorno.error4("Uno o ambos aeropuertos no existen");
+                }
+
+                Aerolinea existeAerolinea = this.ABBAerolinea.buscar(new Aerolinea(codigoAerolinea));
+                if (existeAerolinea == null) {
+                    return Retorno.error5("No existe la aerolinea que ingreso");
+                }
+
+                Conexion conex = this.GrafoAeropuerto.getConexiones()[indiceOrigen][indiceDestino];
+
+                if (conex == null) {
+                    return Retorno.error6("No existe una conexión entre los aeropuertos");
+                }
+
+                if (conex.existeVuelo(new Vuelo(codigoDeVuelo))) {
+                    return Retorno.error7("Ya existe un vuelo con el mismo código en esta conexión");
+                }
+
+                Vuelo nuevoVuelo = new Vuelo(codigoDeVuelo, combustible, minutos, costoEnDolares, codigoAerolinea);
+                conex.agregarVuelo(nuevoVuelo);
+                return Retorno.ok();
+            }
+            return Retorno.error1("Los valores de tipo numerico no pueden ser iguales o menores a cero");
+        }
+        return Retorno.error2("Las variables del tipo string no pueden ser vacias");
     }
 
     @Override

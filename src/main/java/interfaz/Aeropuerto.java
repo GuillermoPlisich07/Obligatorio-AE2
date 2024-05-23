@@ -29,6 +29,12 @@ public class Aeropuerto implements Comparable<Aeropuerto>{
 
     }
 
+    public Aeropuerto(String codigo)
+    {
+        this.codigo=codigo;
+
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

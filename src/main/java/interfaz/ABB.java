@@ -82,4 +82,28 @@ public class ABB<T extends Comparable<T>>{
         return "";
 
     }
+
+    public String listarAscendente(){
+        return listarAscendente(this.raiz);
+    }
+
+    public String listarAscendente(Nodo<T> nodo){
+        if (nodo != null) {
+
+            String der = listarAscendente(nodo.getDer());
+            if (!der.isEmpty()) {
+                der += "|";
+            }
+
+            String nodoActual = nodo.getDato().toString();
+
+            String izq = listarAscendente(nodo.getIzq());
+            if (!izq.isEmpty()) {
+                nodoActual += "|";
+            }
+
+            return  der + nodoActual + izq;
+        }
+        return "";
+    }
 }
